@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { askQuestion, type ReferenceChunk } from '@/api/chat'
 import { sendTrace } from '@/api/monitor'
 import { listKbs, type KnowledgeBase } from '@/api/kb'
+import { getModelConfig } from '@/api/system'
 import {
   listSessions, getSessionMessages,
   clearSession, exportSession,
@@ -31,6 +32,7 @@ const msgFeedback = ref<Record<number, MsgFeedback>>({})
 const currentKbId = ref<number | null>(appStore.currentKbId)
 const currentModel = ref(appStore.currentModel)
 const searchMode = ref(appStore.searchMode)
+const modelOptions = ref<string[]>([])
 
 // Collapse state
 const sidebarCollapsed = ref(false)
@@ -85,6 +87,17 @@ async function fetchKbs() {
   if (!currentKbId.value && kbs.value.length > 0) {
     currentKbId.value = kbs.value[0].id
   }
+}
+
+async function fetchModels() {
+  try {
+    const res = await getModelConfig()
+    modelOptions.value = res.models
+    // 若当前选中的模型已不在配置列表中，回退到第一个
+    if (modelOptions.value.length && !modelOptions.value.includes(currentModel.value)) {
+      currentModel.value = modelOptions.value[0]
+    }
+  } catch { /* keep current model */ }
 }
 
 async function fetchSessions() {
@@ -380,7 +393,7 @@ function onRefLeave() {
   hoveredChunkId.value = null
 }
 
-onMounted(() => { fetchKbs(); fetchSessions() })
+onMounted(() => { fetchKbs(); fetchModels(); fetchSessions() })
 </script>
 
 <template>
@@ -513,10 +526,8 @@ onMounted(() => { fetchKbs(); fetchSessions() })
             </div>
             <div class="toolbar-item">
               <span class="toolbar-label">模型选择</span>
-              <el-select v-model="currentModel" size="small" class="toolbar-select">
-                <el-option label="qwen3-max" value="qwen3-max" />
-                <el-option label="glm-5.1" value="glm-5.1" />
-                <el-option label="deepseek-v4-pro" value="deepseek-v4-pro" />
+              <el-select v-model="currentModel" size="small" class="toolbar-select" placeholder="请选择模型">
+                <el-option v-for="m in modelOptions" :key="m" :label="m" :value="m" />
               </el-select>
             </div>
             <div class="toolbar-item">

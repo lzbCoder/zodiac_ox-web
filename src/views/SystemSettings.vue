@@ -5,6 +5,7 @@ import {
   listConfigs, createConfig, updateConfig, deleteConfig, checkConnection,
   getPromptConfig, savePromptConfig,
   getRetrievalConfig, saveRetrievalConfig,
+  getModelConfig, saveModelConfig,
   getFeatureFlags, toggleOtel, toggleMemory,
   type SystemConfigItem, type ConnectionStatus, type PromptConfig, type RetrievalConfig
 } from '@/api/system'
@@ -31,6 +32,10 @@ const retrievalForm = ref<RetrievalConfig>({
   final_top_k: 5,
 })
 const savingRetrieval = ref(false)
+
+// Model config form — list of model names (at least one)
+const modelList = ref<string[]>([''])
+const savingModels = ref(false)
 
 // Feature flags
 const otelEnabled = ref(true)
@@ -167,11 +172,50 @@ async function handleSaveRetrieval() {
   }
 }
 
+async function fetchModelConfig() {
+  try {
+    const res = await getModelConfig()
+    modelList.value = res.models.length ? [...res.models] : ['']
+  } catch { /* use default */ }
+}
+
+function addModel() {
+  modelList.value.push('')
+}
+
+function removeModel(index: number) {
+  if (modelList.value.length <= 1) {
+    ElMessage.warning('至少保留一个模型')
+    return
+  }
+  modelList.value.splice(index, 1)
+}
+
+async function handleSaveModels() {
+  // 去空白、去空项、去重
+  const cleaned = Array.from(new Set(modelList.value.map(m => m.trim()).filter(Boolean)))
+  if (cleaned.length === 0) {
+    ElMessage.warning('至少需要配置一个模型名称')
+    return
+  }
+  savingModels.value = true
+  try {
+    const res = await saveModelConfig({ models: cleaned })
+    modelList.value = res.models.length ? [...res.models] : ['']
+    ElMessage.success('模型配置保存成功')
+  } catch {
+    ElMessage.error('保存失败')
+  } finally {
+    savingModels.value = false
+  }
+}
+
 onMounted(() => {
   fetchConfigs()
   checkConn()
   fetchPromptConfig()
   fetchRetrievalConfig()
+  fetchModelConfig()
   fetchFeatureFlags()
 })
 </script>
@@ -251,6 +295,45 @@ onMounted(() => {
             show-icon
             title="配置说明"
             description="修改后立即生效，仅对新发起的问答生效。普通检索仅使用稠密向量 TopK 和融合结果 TopK；混合检索同时使用三个参数。"
+          />
+        </el-card>
+      </el-tab-pane>
+
+      <!-- Model Config -->
+      <el-tab-pane label="模型配置" name="model">
+        <el-card>
+          <div style="max-width:520px;">
+            <div v-for="(_, idx) in modelList" :key="idx" class="model-row">
+              <el-input
+                v-model="modelList[idx]"
+                placeholder="请输入模型名称，如 qwen3-max"
+                clearable
+              />
+              <el-button
+                type="danger"
+                text
+                :disabled="modelList.length <= 1"
+                @click="removeModel(idx)"
+              >
+                删除
+              </el-button>
+            </div>
+            <div style="margin-top:8px;">
+              <el-button @click="addModel">
+                <el-icon style="margin-right:4px;"><Plus /></el-icon>添加模型
+              </el-button>
+              <el-button type="primary" :loading="savingModels" @click="handleSaveModels">
+                保存模型配置
+              </el-button>
+            </div>
+          </div>
+          <el-alert
+            style="margin-top:16px"
+            type="info"
+            :closable="false"
+            show-icon
+            title="配置说明"
+            description="此处配置的模型将在 RAG 问答页的「模型选择」下拉框中动态加载。至少需保留一个模型。模型名称需与服务端支持的模型标识一致。"
           />
         </el-card>
       </el-tab-pane>
@@ -349,3 +432,12 @@ onMounted(() => {
     </el-tabs>
   </div>
 </template>
+
+<style scoped>
+.model-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+</style>

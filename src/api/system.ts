@@ -71,6 +71,18 @@ export function saveRetrievalConfig(data: RetrievalConfig) {
   return api.post<any, { message: string }>('/system/retrieval-config', data)
 }
 
+export interface ModelConfig {
+  models: string[]
+}
+
+export function getModelConfig() {
+  return api.get<any, ModelConfig>('/system/model-config')
+}
+
+export function saveModelConfig(data: ModelConfig) {
+  return api.post<any, { message: string; models: string[] }>('/system/model-config', data)
+}
+
 export interface FeatureFlags {
   otel_enabled: boolean
   memory_enabled: boolean
