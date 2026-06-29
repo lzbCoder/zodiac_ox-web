@@ -49,6 +49,7 @@ marked.use(markedHighlight({
     return hljs.highlightAuto(code).value
   },
 }))
+marked.setOptions({ gfm: true, breaks: true })
 
 const sessionGroups = computed(() => {
   const now = new Date()
@@ -1047,8 +1048,5 @@ onMounted(() => { fetchKbs(); fetchSessions() })
   border-color: #1677FF !important;
 }
 
-/* Markdown */
-.markdown-body :deep(pre) { background: #f0f0f0; padding: 10px; border-radius: 6px; overflow-x: auto; }
-.markdown-body :deep(code) { font-size: 14px; }
-.markdown-body :deep(p) { margin: 0 0 4px; }
+/* Markdown styles are defined globally in assets/style.css (.markdown-body) */
 </style>

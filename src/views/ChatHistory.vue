@@ -6,6 +6,8 @@ import { listSessions, getSessionMessages, deleteMessage, clearSession, exportSe
 import { useAppStore } from '@/stores/app'
 import { marked } from 'marked'
 
+marked.setOptions({ gfm: true, breaks: true })
+
 const router = useRouter()
 const appStore = useAppStore()
 const sessions = ref<SessionInfo[]>([])
@@ -181,10 +183,5 @@ onMounted(fetchSessions)
   font-size: 14px;
   line-height: 1.6;
 }
-.markdown-body :deep(pre) {
-  background: #f0f0f0;
-  padding: 8px;
-  border-radius: 4px;
-  overflow-x: auto;
-}
+/* Markdown styles are defined globally in assets/style.css (.markdown-body) */
 </style>
