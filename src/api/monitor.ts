@@ -75,6 +75,8 @@ export interface ChatDetail {
   llm_model: string | null
   feedback: string | null
   status: string
+  system_prompt: string | null
+  user_prompt: string | null
   create_time: string
   chunks: ChunkDetail[]
 }

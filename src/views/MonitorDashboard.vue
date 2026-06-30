@@ -2,12 +2,15 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Download } from '@element-plus/icons-vue'
+import { marked } from 'marked'
 import {
   getOverview, getTrend, getFeedbackDistribution, getKbDistribution,
   getChatList, getChatDetail, exportChats,
   type OverviewData, type TrendPoint, type ChatListItem, type ChatDetail,
 } from '@/api/monitor'
 import { listKbs } from '@/api/kb'
+
+marked.setOptions({ gfm: true, breaks: true })
 
 // ── Filters ──
 const timeRange = ref('today')
@@ -476,8 +479,8 @@ function fmtChartTime(t: string) {
         <el-tabs v-model="detailTab">
           <el-tab-pane label="基础信息" name="basic">
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="Chat ID">{{ detail.chat_id }}</el-descriptions-item>
-              <el-descriptions-item label="Session ID">{{ detail.session_id }}</el-descriptions-item>
+              <el-descriptions-item label="对话ID">{{ detail.chat_id }}</el-descriptions-item>
+              <el-descriptions-item label="会话ID">{{ detail.session_id }}</el-descriptions-item>
               <el-descriptions-item label="知识库ID">{{ detail.kb_id }}</el-descriptions-item>
               <el-descriptions-item label="状态">
                 <el-tag :type="detail.status === 'success' ? 'success' : 'danger'">{{ detail.status }}</el-tag>
@@ -487,18 +490,31 @@ function fmtChartTime(t: string) {
               <el-descriptions-item label="检索耗时">{{ detail.search_cost_ms }}ms</el-descriptions-item>
               <el-descriptions-item label="LLM耗时">{{ detail.llm_cost_ms }}ms</el-descriptions-item>
               <el-descriptions-item label="总耗时">{{ detail.total_cost_ms }}ms</el-descriptions-item>
-              <el-descriptions-item label="Prompt Tokens">{{ detail.prompt_tokens }}</el-descriptions-item>
-              <el-descriptions-item label="Completion Tokens">{{ detail.completion_tokens }}</el-descriptions-item>
-              <el-descriptions-item label="Total Tokens">{{ detail.total_tokens }}</el-descriptions-item>
+              <el-descriptions-item label="提示词Tokens">{{ detail.prompt_tokens }}</el-descriptions-item>
+              <el-descriptions-item label="生成Tokens">{{ detail.completion_tokens }}</el-descriptions-item>
+              <el-descriptions-item label="总Tokens">{{ detail.total_tokens }}</el-descriptions-item>
               <el-descriptions-item label="操作时间">{{ fmtTime(detail.create_time) }}</el-descriptions-item>
             </el-descriptions>
           </el-tab-pane>
           <el-tab-pane label="问答内容" name="qa">
-            <div class="qa-section">
-              <h4>用户问题</h4>
-              <div class="qa-text">{{ detail.query }}</div>
-              <h4 style="margin-top:16px">AI回答</h4>
-              <div class="qa-text">{{ detail.answer || '(生成失败)' }}</div>
+            <div class="detail-block">
+              <div class="detail-block-title">用户问题</div>
+              <div class="detail-block-body markdown-body" v-html="marked(detail.query)"></div>
+            </div>
+            <div class="detail-block" style="margin-top:16px">
+              <div class="detail-block-title">AI 回答</div>
+              <div v-if="detail.answer" class="detail-block-body markdown-body" v-html="marked(detail.answer)"></div>
+              <div v-else class="detail-block-body">(生成失败)</div>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="提示词" name="prompt">
+            <div class="detail-block">
+              <div class="detail-block-title">系统提示词 (System Prompt)</div>
+              <div class="detail-block-body markdown-body" v-html="marked(detail.system_prompt || '(无)')"></div>
+            </div>
+            <div class="detail-block" style="margin-top:16px">
+              <div class="detail-block-title">用户提示词 (User Prompt)</div>
+              <div class="detail-block-body markdown-body" v-html="marked(detail.user_prompt || '(无)')"></div>
             </div>
           </el-tab-pane>
           <el-tab-pane label="检索详情" name="chunks">
@@ -566,5 +582,23 @@ function fmtChartTime(t: string) {
 .table-header h4 { margin: 0; font-size: 15px; }
 .empty-table { text-align: center; padding: 40px; color: #999; }
 
-.qa-text { background: #f5f7fa; border-radius: 6px; padding: 12px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+
+/* ── Dialog detail blocks (QA / Prompt) ─────────────── */
+.detail-block-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2329;
+  margin-bottom: 8px;
+}
+.detail-block-body {
+  background: #fafbfc;
+  border: 1px solid #eaecef;
+  border-radius: 8px;
+  padding: 14px 16px;
+  max-height: 320px;
+  overflow-y: auto;
+  line-height: 1.65;
+  font-size: 14px;
+  color: #333;
+}
 </style>
