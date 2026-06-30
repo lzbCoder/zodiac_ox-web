@@ -323,7 +323,7 @@ onUnmounted(() => {
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="评测类型" width="120" align="center">
+      <el-table-column label="评测类型" width="150" align="center">
         <template #default="{ row }">
           <el-tag :type="row.enable_ragas ? 'success' : 'info'" size="small">
             {{ row.enable_ragas ? '检索 + 生成评测' : '仅检索评测' }}
@@ -335,24 +335,24 @@ onUnmounted(() => {
           <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="进度" min-width="140" align="center">
+      <el-table-column label="进度" width="140" align="center">
         <template #default="{ row }">
           <el-progress :percentage="row.progress" :status="row.status === 'failed' ? 'exception' : (row.status === 'completed' ? 'success' : undefined)" :stroke-width="14" />
         </template>
       </el-table-column>
-      <el-table-column label="召回率" width="80" align="right">
+      <el-table-column label="召回率" width="80" align="center">
         <template #default="{ row }">{{ fmtPct(row.recall) }}</template>
       </el-table-column>
-      <el-table-column label="准确率" width="90" align="right">
+      <el-table-column label="准确率" width="90" align="center">
         <template #default="{ row }">{{ fmtPct(row.precision) }}</template>
       </el-table-column>
-      <el-table-column label="命中率" width="80" align="right">
+      <el-table-column label="命中率" width="80" align="center">
         <template #default="{ row }">{{ fmtPct(row.hit_rate) }}</template>
       </el-table-column>
-      <el-table-column label="MRR" width="70" align="right">
+      <el-table-column label="MRR" width="70" align="center">
         <template #default="{ row }">{{ fmtMrr(row.mrr) }}</template>
       </el-table-column>
-      <el-table-column prop="cost_seconds" label="耗时(s)" width="80" align="right" />
+      <el-table-column prop="cost_seconds" label="耗时(s)" width="80" align="center" />
       <el-table-column label="操作" width="240" align="center" fixed="right">
         <template #default="{ row }">
           <div class="action-btns">

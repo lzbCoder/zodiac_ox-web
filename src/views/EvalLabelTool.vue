@@ -58,6 +58,8 @@ const currentQuery = ref('')
 const currentAnswer = ref<string | null>(null)
 const checkedChunkIds = ref<Set<number>>(new Set())
 const saving = ref(false)
+const chunkVisible = ref(false)
+const clickedChunk = ref<CandidateChunk | null>(null)
 
 // ── Batch mode ──────────────────────────────────────────
 
@@ -375,6 +377,11 @@ function toggleChunk(chunkId: number) {
 
 function isChunkChecked(chunkId: number) {
   return checkedChunkIds.value.has(chunkId)
+}
+
+function openChunkDetail(chunk: CandidateChunk) {
+  clickedChunk.value = chunk
+  chunkVisible.value = true
 }
 
 async function handleSave() {
@@ -727,56 +734,58 @@ onUnmounted(() => {
         <!-- Right Panel: Chunk Selection -->
         <div class="right-panel">
           <template v-if="selectedDetailId">
-            <!-- Query & Standard Answer -->
-            <el-card shadow="never" style="margin-bottom: 12px;">
-              <div style="font-weight: 600; margin-bottom: 4px; font-size: 14px;">问题 (Query)</div>
-              <div style="color: #333; line-height: 1.6;">{{ currentQuery }}</div>
-              <el-collapse v-if="currentAnswer" style="margin-top: 8px;">
-                <el-collapse-item>
-                  <template #title>
-                    <span style="font-weight: 600; font-size: 14px; color: #303133;">标准答案（点击展开）</span>
-                  </template>
-                  <div style="color: #666; line-height: 1.6; white-space: pre-wrap;">{{ currentAnswer }}</div>
-                </el-collapse-item>
-              </el-collapse>
-            </el-card>
+            <div class="right-panel-scroll">
+              <!-- Query & Standard Answer -->
+              <el-card shadow="never" style="margin-bottom: 12px;">
+                <div style="font-weight: 600; margin-bottom: 4px; font-size: 14px;">问题 (Query)</div>
+                <div style="color: #333; line-height: 1.6;">{{ currentQuery }}</div>
+                <el-collapse v-if="currentAnswer" style="margin-top: 8px;">
+                  <el-collapse-item>
+                    <template #title>
+                      <span style="font-weight: 600; font-size: 14px; color: #303133;">标准答案（点击展开）</span>
+                    </template>
+                    <div style="color: #666; line-height: 1.6; white-space: pre-wrap;">{{ currentAnswer }}</div>
+                  </el-collapse-item>
+                </el-collapse>
+              </el-card>
 
-            <!-- Candidate Chunks -->
-            <div v-loading="candidateLoading" style="min-height: 200px;">
-              <div v-if="currentChunks.length === 0 && !candidateLoading" style="text-align: center; padding: 40px; color: #999;">
-                未检索到相关Chunk，请确认知识库中有相关文档
+              <!-- Candidate Chunks -->
+              <div v-loading="candidateLoading" style="min-height: 200px;">
+                <div v-if="currentChunks.length === 0 && !candidateLoading" style="text-align: center; padding: 40px; color: #999;">
+                  未检索到相关Chunk，请确认知识库中有相关文档
+                </div>
+                <el-table v-else :data="currentChunks" stripe style="width: 100%" row-class-name="chunk-row">
+                  <el-table-column width="50" align="center">
+                    <template #default="{ row: chunk }">
+                      <el-checkbox
+                        :model-value="isChunkChecked(chunk.chunk_id)"
+                        @change="toggleChunk(chunk.chunk_id)"
+                        @click.stop
+                      />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="Chunk内容" min-width="300">
+                    <template #default="{ row: chunk }">
+                      <span class="chunk-content clickable" @click="openChunkDetail(chunk)">{{ chunk.content.length > 200 ? chunk.content.slice(0, 200) + '...' : chunk.content }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="文档" width="140" align="center" show-overflow-tooltip>
+                    <template #default="{ row: chunk }">{{ chunk.doc_name }}</template>
+                  </el-table-column>
+                  <el-table-column label="相关性" width="85" align="right">
+                    <template #default="{ row: chunk }">
+                      <span :style="{ color: scoreColor(chunk.score), fontWeight: 600 }">
+                        {{ (chunk.score * 100).toFixed(1) }}%
+                      </span>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <div style="margin-top: 4px; font-size: 12px; color: #999; text-align: center;">点击行查看完整内容</div>
               </div>
-              <el-table v-else :data="currentChunks" stripe style="width: 100%" row-class-name="chunk-row">
-                <el-table-column width="50" align="center">
-                  <template #default="{ row: chunk }">
-                    <el-checkbox
-                      :model-value="isChunkChecked(chunk.chunk_id)"
-                      @change="toggleChunk(chunk.chunk_id)"
-                    />
-                  </template>
-                </el-table-column>
-                <el-table-column label="Chunk内容" min-width="300" show-overflow-tooltip>
-                  <template #default="{ row: chunk }">
-                    <el-tooltip placement="top-start" :content="chunk.content" :disabled="chunk.content.length <= 200">
-                      <span class="chunk-content">{{ chunk.content.length > 200 ? chunk.content.slice(0, 200) + '...' : chunk.content }}</span>
-                    </el-tooltip>
-                  </template>
-                </el-table-column>
-                <el-table-column label="文档" width="140" align="center" show-overflow-tooltip>
-                  <template #default="{ row: chunk }">{{ chunk.doc_name }}</template>
-                </el-table-column>
-                <el-table-column label="相关性" width="85" align="right">
-                  <template #default="{ row: chunk }">
-                    <span :style="{ color: scoreColor(chunk.score), fontWeight: 600 }">
-                      {{ (chunk.score * 100).toFixed(1) }}%
-                    </span>
-                  </template>
-                </el-table-column>
-              </el-table>
             </div>
 
-            <!-- Actions -->
-            <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+            <!-- Actions (fixed at bottom) -->
+            <div class="right-panel-actions">
               <el-button @click="goPrev" :disabled="!details.length || details[0]?.id === selectedDetailId">上一条</el-button>
               <el-button @click="goNext" :disabled="!details.length || details[details.length - 1]?.id === selectedDetailId">下一条</el-button>
               <el-button type="primary" :loading="saving" @click="handleSave">保存标注</el-button>
@@ -787,6 +796,23 @@ onUnmounted(() => {
         </div>
       </div>
     </template>
+
+    <!-- Chunk Detail Dialog (root level, outside both views) -->
+    <el-dialog v-model="chunkVisible" title="Chunk 完整内容" width="750px" top="8vh" destroy-on-close>
+      <template v-if="clickedChunk">
+        <div style="margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #666;">
+          <span><b>文档：</b>{{ clickedChunk.doc_name }}</span>
+          <span><b>页码：</b>{{ clickedChunk.page_num ?? '-' }}</span>
+          <span><b>相关度：</b>{{ (clickedChunk.score * 100).toFixed(1) }}%</span>
+        </div>
+        <div style="background: #fafbfc; border: 1px solid #eaecef; border-radius: 8px; padding: 16px; max-height: 55vh; overflow-y: auto; white-space: pre-wrap; line-height: 1.7; font-size: 14px; color: #333;">
+          {{ clickedChunk.content }}
+        </div>
+      </template>
+      <template #footer>
+        <el-button @click="chunkVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -881,12 +907,30 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow: hidden;
+  min-height: 0;
+}
+.right-panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.right-panel-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 12px;
 }
 
 .chunk-content {
   font-size: 13px;
   line-height: 1.5;
+}
+.chunk-content.clickable {
+  cursor: pointer;
 }
 
 :deep(.chunk-row) {

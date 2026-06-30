@@ -208,6 +208,7 @@ const statusTagType = (s: string) => {
     pending: "info",
     processing: "warning",
     success: "success",
+    completed: "success",
     failed: "danger",
   };
   return map[s] || "info";
@@ -217,6 +218,7 @@ const statusLabel = (s: string) => {
     pending: "待处理",
     processing: "处理中",
     success: "成功",
+    completed: "已完成",
     failed: "失败",
   };
   return map[s] || s;
@@ -271,45 +273,46 @@ onMounted(() => {
         prop="filename"
         label="文件名"
         min-width="200"
+        align="center"
         show-overflow-tooltip
       />
-      <el-table-column label="知识库" width="130" align="center" show-overflow-tooltip>
+      <el-table-column label="知识库" width="160" align="center" show-overflow-tooltip>
         <template #default="{ row }">
           <el-tooltip :content="row.kb_name" placement="top" :disabled="row.kb_name.length <= 10">
             <span class="name-cell">{{ row.kb_name.length > 10 ? row.kb_name.slice(0, 10) + '...' : row.kb_name }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column prop="file_type" label="类型" width="80" />
-      <el-table-column label="大小" width="100">
+      <el-table-column prop="file_type" label="类型" width="110" align="center" />
+      <el-table-column label="大小" width="100" align="center">
         <template #default="{ row }">{{ formatSize(row.file_size) }}</template>
       </el-table-column>
-      <el-table-column prop="page_count" label="页码" width="80" />
-      <el-table-column label="上传状态" width="100">
+      <el-table-column prop="page_count" label="页码" width="110" align="center" />
+      <el-table-column label="上传状态" width="110" align="center">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.upload_status)" size="small">{{
             statusLabel(row.upload_status)
           }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="向量状态" width="100">
+      <el-table-column label="向量状态" width="110" align="center">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.vector_status)" size="small">{{
             statusLabel(row.vector_status)
           }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="分片数" width="80">
+      <el-table-column label="分片数" width="110" align="center">
         <template #default="{ row }">{{ row.chunk_count }}</template>
       </el-table-column>
-      <el-table-column label="创建时间" width="170" align="center">
+      <el-table-column label="创建时间" width="200" align="center">
         <template #default="{ row }">{{
           row.created_at
             ? new Date(row.created_at).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-')
             : '-'
         }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="操作" width="250" align="center" fixed="right">
         <template #default="{ row }">
           <el-button size="small" @click="handlePreview(row.id)"
             >预览</el-button
