@@ -221,10 +221,6 @@ function formatDate(iso: string) {
   return iso.replace("T", " ").slice(0, 19);
 }
 
-function truncateName(name: string, max = 20) {
-  return name.length > max ? name.slice(0, max) + "..." : name;
-}
-
 onMounted(() => {
   fetchDatasets();
   fetchKbs();
@@ -258,24 +254,35 @@ onMounted(() => {
     </div>
 
     <el-table :data="datasets" v-loading="loading" stripe style="width: 100%">
-      <el-table-column label="名称" min-width="200">
+      <el-table-column label="名称" min-width="200" align="center">
         <template #default="{ row }">
           <el-tooltip
             :content="row.name"
             placement="top"
-            :disabled="row.name.length <= 50"
+            :disabled="row.name.length <= 20"
           >
-            <span class="name-cell">{{ truncateName(row.name) }}</span>
+            <span class="name-cell">{{ row.name.length > 20 ? row.name.slice(0, 20) + '...' : row.name }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column label="样本数" width="90" align="center">
+      <el-table-column label="描述" min-width="160" align="center" show-overflow-tooltip>
+        <template #default="{ row }">
+          <el-tooltip
+            :content="row.description || '-'"
+            placement="top"
+            :disabled="!row.description || row.description.length <= 20"
+          >
+            <span class="name-cell">{{ row.description ? (row.description.length > 20 ? row.description.slice(0, 20) + '...' : row.description) : '-' }}</span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column label="样本数" width="190" align="center">
         <template #default="{ row }">{{ row.total_questions }}</template>
       </el-table-column>
-      <el-table-column label="创建时间" width="170" align="center">
+      <el-table-column label="创建时间" width="270" align="center">
         <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="290" align="center" fixed="right">
+      <el-table-column label="操作" width="390" align="center" fixed="right">
         <template #default="{ row }">
           <div class="action-btns">
             <el-button @click="openEdit(row)">编辑</el-button>

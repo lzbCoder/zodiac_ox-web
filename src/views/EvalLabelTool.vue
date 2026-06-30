@@ -525,38 +525,47 @@ onUnmounted(() => {
       </div>
 
       <el-table :data="tasks" v-loading="loading" stripe style="width: 100%">
-        <el-table-column label="任务名称" min-width="180" show-overflow-tooltip>
+        <el-table-column label="名称" min-width="120" align="center" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-tooltip :content="row.name" placement="top" :disabled="row.name.length <= 15">
-              <span class="name-cell">{{ row.name.length > 15 ? row.name.slice(0, 15) + '...' : row.name }}</span>
+            <el-tooltip :content="row.name" placement="top" :disabled="row.name.length <= 10">
+              <span class="name-cell">{{ row.name.length > 10 ? row.name.slice(0, 10) + '...' : row.name }}</span>
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column label="知识库" width="130" align="center" show-overflow-tooltip>
+        <el-table-column label="描述" min-width="120" align="center" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-tooltip :content="row.description || '-'" placement="top" :disabled="!row.description || row.description.length <= 10">
+              <span class="name-cell">{{ row.description ? (row.description.length > 10 ? row.description.slice(0, 10) + '...' : row.description) : '-' }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column label="知识库" width="180" align="center" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ kbs.find(k => k.id === row.kb_id)?.name || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Top-K" width="75" align="center">
+        <el-table-column label="Top-K" width="120" align="center">
           <template #default="{ row }">{{ row.top_k }}</template>
         </el-table-column>
-        <el-table-column label="标注进度" width="180" align="center">
+        <el-table-column label="标注进度" width="190" align="center">
           <template #default="{ row }">
-            <el-progress :percentage="row.progress" :stroke-width="14" :status="row.status === 'completed' ? 'success' : undefined" />
-            <span style="font-size: 12px; color: #999;">{{ fmtProgress(row) }}</span>
+            <div class="progress-cell">
+              <el-progress :percentage="row.progress" :stroke-width="10" :show-text="false" :status="row.status === 'completed' ? 'success' : undefined" />
+              <span class="progress-text">{{ fmtProgress(row) }}</span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="90" align="center">
+        <el-table-column label="状态" width="120" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 'completed' ? 'success' : 'info'" size="small">
               {{ row.status === 'completed' ? '已完成' : '进行中' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="160" align="center">
-          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
+        <el-table-column label="创建时间" width="180" align="center">
+          <template #default="{ row }"><span style="white-space:nowrap">{{ formatDate(row.created_at) }}</span></template>
         </el-table-column>
-        <el-table-column label="操作" width="260" align="center" fixed="right">
+        <el-table-column label="操作" width="360" align="center" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
               <el-button size="small" type="primary" @click="enterWorkspace(row)">进入标注</el-button>
@@ -794,6 +803,21 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress-cell .el-progress {
+  flex: 1;
+  margin-bottom: 0;
+}
+.progress-text {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ── Workspace layout ──────────────────────────────────── */
