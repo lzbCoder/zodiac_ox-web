@@ -51,8 +51,8 @@ export function deleteDocument(docId: number) {
   return api.delete(`/documents/${docId}`)
 }
 
-export function listFileTypes() {
-  return api.get<string[]>('/documents/file-types')
+export function listFileTypes(): Promise<string[]> {
+  return api.get('/documents/file-types') as any
 }
 
 export function getChunkConfig(kbId: number) {
