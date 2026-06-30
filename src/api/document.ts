@@ -51,6 +51,10 @@ export function deleteDocument(docId: number) {
   return api.delete(`/documents/${docId}`)
 }
 
+export function listFileTypes() {
+  return api.get<string[]>('/documents/file-types')
+}
+
 export function getChunkConfig(kbId: number) {
   return api.get(`/documents/chunk-config/${kbId}`)
 }

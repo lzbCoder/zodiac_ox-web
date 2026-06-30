@@ -29,7 +29,7 @@ const router = useRouter()
       >
         <el-menu-item index="/kb">
           <el-icon :size="18"><Folder /></el-icon>
-          <span>知识库管理</span>
+          <span>知识库</span>
         </el-menu-item>
         <el-menu-item index="/documents">
           <el-icon :size="18"><Document /></el-icon>

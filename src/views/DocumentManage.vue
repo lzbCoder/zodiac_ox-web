@@ -9,6 +9,7 @@ import {
   deleteDocument,
   getChunkConfig,
   updateChunkConfig,
+  listFileTypes,
   type DocumentItem,
   type ChunkPreviewItem,
 } from "@/api/document";
@@ -27,6 +28,13 @@ const pageSize = ref(20);
 const loading = ref(false);
 const filterKbId = ref<number | null>(null);
 const filterType = ref<string | null>(null);
+const fileTypes = ref<string[]>([]);
+
+async function fetchFileTypes() {
+  try {
+    fileTypes.value = await listFileTypes();
+  } catch { /* ignore */ }
+}
 
 // Upload dialog
 const uploadVisible = ref(false);
@@ -124,6 +132,7 @@ async function handleUpload() {
     ElMessage.success("文档上传、解析、向量化入库完成");
     uploadVisible.value = false;
     fetchDocuments();
+    fetchFileTypes();
   } catch {
     ElMessage.error("上传失败，请检查文件或参数后重试");
   } finally {
@@ -182,6 +191,7 @@ async function handleDelete(doc: DocumentItem) {
     await deleteDocument(doc.id);
     ElMessage.success("已删除");
     fetchDocuments();
+    fetchFileTypes();
   } catch {
     /* canceled */
   }
@@ -215,6 +225,7 @@ const statusLabel = (s: string) => {
 onMounted(() => {
   fetchDocuments();
   fetchKbs();
+  fetchFileTypes();
 });
 </script>
 
@@ -250,10 +261,7 @@ onMounted(() => {
         @change="fetchDocuments"
         style="width: 140px"
       >
-        <el-option label="PDF" value="pdf" />
-        <el-option label="DOCX" value="docx" />
-        <el-option label="TXT" value="txt" />
-        <el-option label="MD" value="md" />
+        <el-option v-for="t in fileTypes" :key="t" :label="t.toUpperCase()" :value="t" />
       </el-select>
     </div>
 
